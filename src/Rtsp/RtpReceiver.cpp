@@ -215,8 +215,8 @@ bool RtpReceiver::handleJT1078Rtp(int track_index, TrackType type, int samplerat
     rtp.timeStamp = rtp.timeStamp * 1000LL / samplerate;
 
     //将sim卡当作ssrc,但是sim卡长度超过uint32_t，将将第一位去掉（通常为1）,内存对齐
-    rtp.ssrc = atoll(simcard.c_str() + 1);
-
+    auto x = _atoi64(simcard.c_str()) % 1000000000LL;
+    rtp.ssrc = x;
     if (_ssrc[track_index] != rtp.ssrc) {
         if (_ssrc[track_index] == 0) {
             //保存SSRC至track对象

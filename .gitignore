@@ -45,3 +45,5 @@
 /build/
 /3rdpart/media-server/.idea/
 /ios/
+/out/build/x64-Debug (默认值)/.cmake/api/v1
+/out/build/x64-Debug (默认值)
