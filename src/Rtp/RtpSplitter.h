@@ -37,6 +37,7 @@ protected:
 private:
     int _offset = 0;
     bool _is_ehome = false;
+    bool _is_jt1078 = false;
 };
 
 }//namespace mediakit

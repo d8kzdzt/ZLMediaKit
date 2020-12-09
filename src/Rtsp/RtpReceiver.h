@@ -175,6 +175,16 @@ protected:
      */
     bool handleOneRtp(int track_index, TrackType type, int samplerate, unsigned char *rtp_raw_ptr, unsigned int rtp_raw_len);
 
+
+    /**
+     * 字符串转bcd码
+     */
+    string bcdCode(const char* data, int len);
+
+    /**
+    * 兼容jt1078的rtp包 
+    */
+    bool handleJT1078Rtp(int track_index, TrackType type, int samplerate, unsigned char* rtp_raw_ptr, unsigned int rtp_raw_len);
     /**
      * rtp数据包排序后输出
      * @param rtp rtp数据包

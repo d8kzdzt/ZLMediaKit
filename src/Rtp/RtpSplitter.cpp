@@ -14,6 +14,7 @@
 namespace mediakit{
 
 static const char kEHOME_MAGIC[] = "\x01\x00\x01\x00";
+static const char kJT1078_MAGIC[] = "\x30\x31\x63\x64";
 static const int  kEHOME_OFFSET = 256;
 
 RtpSplitter::RtpSplitter() {}
@@ -40,6 +41,13 @@ static bool isEhome(const char *data, uint64_t len){
     }
     return memcmp(data, kEHOME_MAGIC, sizeof(kEHOME_MAGIC) - 1) == 0;
 }
+static bool isJT1078(const char* data, uint64_t len) {
+    if (len < 4) {
+        return false;
+    }
+    bool _1078 = memcmp(data, kJT1078_MAGIC, sizeof(kJT1078_MAGIC) - 1) == 0;
+    return _1078;
+}
 
 const char *RtpSplitter::onSearchPacketTail(const char *data, uint64_t len) {
     if (len < 4) {
@@ -64,6 +72,16 @@ const char *RtpSplitter::onSearchPacketTail(const char *data, uint64_t len) {
         //可能是4个字节的rtp头
         _offset = 4;
         return onSearchPacketTail_l(data + 2, len - 2);
+    }        
+    if (isJT1078(data, len)) {
+        //是1078协议
+        if (len < 26) {
+            //数据不够
+            return nullptr;
+        }
+        _offset = 0;
+        _is_jt1078 = true;
+        return onSearchPacketTail_l(data, len);
     }
     //两个字节的rtp头
     _offset = 2;
@@ -71,14 +89,30 @@ const char *RtpSplitter::onSearchPacketTail(const char *data, uint64_t len) {
 }
 
 const char *RtpSplitter::onSearchPacketTail_l(const char *data, uint64_t len) {
-    //这是rtp包
-    uint16_t length = (((uint8_t *) data)[0] << 8) | ((uint8_t *) data)[1];
-    if (len < length + 2) {
-        //数据不够
+    if (_is_jt1078) {
+        //找到下一个1078的标记，两个标记间即为一个完整的1078类rtp包
+        int next_1078_flag = -1;
+        for (int i = 4; i < len - sizeof(kJT1078_MAGIC); i++) {
+            if (0 == memcmp(data + i, kJT1078_MAGIC, sizeof(kJT1078_MAGIC) - 1)) {
+                next_1078_flag = i;
+                break;
+            }
+        }
+        if (next_1078_flag > 0) {
+            return data + next_1078_flag;
+        }
         return nullptr;
     }
-    //返回rtp包末尾
-    return data + 2 + length;
+    else {
+        //这是rtp包
+        uint16_t length = (((uint8_t*)data)[0] << 8) | ((uint8_t*)data)[1];
+        if (len < length + 2) {
+            //数据不够
+            return nullptr;
+        }
+        //返回rtp包末尾
+        return data + 2 + length;
+    }
 }
 
 }//namespace mediakit
